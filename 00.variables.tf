@@ -21,6 +21,20 @@ variable "cloudflare_api_token" {
 
 #Proxmox Variables
 
+variable "pve_container" {
+  type        = object({
+    ram     = number
+    cores   = number
+    swap    = number
+  })
+  description = "Define los parametros del contenedor a desplegar"
+  default     = {
+    ram     = number
+    cores   = number
+    swap    = number
+  }
+}
+
 variable "pve_vmid" {
   type        = number
   description = "El ID del contenedor"
@@ -31,6 +45,18 @@ variable "pve_template" {
   type        = string
   description = "El ID de la plantilla"
   default     = "debian-12-standard_12.0-1_amd64.tar.xz"
+}
+
+variable "pve_deploymenttype" {
+  type        = string
+  description = "El tipo de despliegue del contenedor AiO ,Web o DB"
+  default     = "AiO"
+}
+
+Variable "pve_environment" {
+  type        = string
+  description = "El entorno de despliegue del contenedor test, dev, prod"
+  default     = "test"
 }
 
 variable "pve_nodename" {
@@ -85,4 +111,4 @@ variable "pve_api_token" {
 locals {
   pve_gateway    = substr(var.pve_nodename, 0, 5) == "vdc2-" ? "10.0.0.10" : "10.0.0.11"
   pve_dnsservers = substr(var.pve_nodename, 0, 5) == "vdc2-" ? [ "10.0.0.10", "10.0.0.11" ] : [ "10.0.0.11", "10.0.0.10" ]
-}
+  }

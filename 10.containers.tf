@@ -51,7 +51,7 @@ EOT
   tags = ["terraform", "debian12", "docker", "odoo"]
 
   initialization {
-    hostname = var.pve_hostname
+    hostname = "${var.pve_hostname}-${var.pve_deploymenttype}"
 
     ip_config {
       ipv4 {
@@ -123,7 +123,10 @@ EOT
       "bash get-docker.sh",
       "apt install -y docker-compose-plugin",
       "echo 'cd /app/' >> /root/.bashrc",
-    ]
+      "cd /app/odoo-$lower(var.pve_deploymenttype)/",
+      "sed -i '/^HOST_NAME=/d' .env",
+      "echo 'HOST_NAME=${var.pve_hostname}-${var.pve_domainname}' >> .env",
+      ]
   }
 }
 
