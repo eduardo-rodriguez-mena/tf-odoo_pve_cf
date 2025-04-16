@@ -68,100 +68,175 @@ provider "proxmox" {
   }
 }
 
+#data "proxmox_virtual_environment_node" "nodos" {
+#    for_each = toset(["vdc1-1", "vdc1-2", "vdc2-1", "vdc2-2"])
+#    node_name = each.value
+#}
 
-data "proxmox_virtual_environment_node" "nodos" {
-    for_each = toset(["vdc1-1", "vdc1-2", "vdc2-1", "vdc2-2"])
-    node_name = each.value
-}
+# output "nodos" {
+#   value = data.proxmox_virtual_environment_node.nodos
+# }
 
-output "nodos" {
-  value = data.proxmox_virtual_environment_node.nodos
-}
+resource "proxmox_virtual_environment_container" "odoo_template" {
+  description = <<EOT
+# Detalles Servicio
 
-resource "proxmox_virtual_environment_container" "ubuntu_container" {
-  description = "Managed by Terraform"
+Hostname: odoo-template
+ 
+**IP:** 10.0.0.180
+
+**Deployed Services: (Docker)** 
+
+      [ ] Odoo Web
+
+      [ ] Odoo DB
+
+      [X] Odoo AiO (Web+DB)
+
+**Ports:** 80,443,5432 TCP
+
+**Admin User:** root
+
+**Admin Password:** ${random_password.odoo_template_password.result}
+
+**Deployed by:**
+
+**Deployed from:** Terraform
+
+**Version:** 1.0
+
+**Observations:**
+EOT
 
   node_name = "vdc2-2"
   vm_id     = 180
 
+  cpu {
+    cores = 2
+    units = 100
+  } 
+
+  memory {
+    dedicated = 2048
+    swap = 2048
+  }
+
+  unprivileged = true
+
+  features {
+    nesting = true
+  }
+
+  tags = ["terraform", "debian12", "docker", "odoo"]
+
   initialization {
-    hostname = "terraform-ubuntu"
+    hostname = "odoo-template"
 
     ip_config {
       ipv4 {
         address = "10.0.0.180/24"
-        gateway = "10.0.0.11"
+        gateway = "10.0.0.10"
       }
+    }
+
+    dns {
+        domain = "yyogestiono.com"
+        servers = ["10.0.0.10", "10.0.0.11"] 
     }
 
     user_account {
       keys = [
-        trimspace(tls_private_key.ubuntu_container_key.public_key_openssh)
+        trimspace(tls_private_key.odoo_template_key.public_key_openssh)
       ]
-      password = random_password.ubuntu_container_password.result
+      password = random_password.odoo_template_password.result
     }
   }
 
   network_interface {
-    name = "veth0"
-    bridge = "Privada"
-
+    name = "eth0"
+    bridge = "Private"
+    rate_limit = 10
   }
 
   disk {
     datastore_id = "local-zfs"
-    size         = 14
+    size         = 16
   }
 
   operating_system {
-    template_file_id = proxmox_virtual_environment_download_file.latest_ubuntu_22_jammy_lxc_img.id
+    template_file_id = proxmox_virtual_environment_download_file.debian-12-standard_lxc_img.id
     # Or you can use a volume ID, as obtained from a "pvesm list <storage>"
     # template_file_id = "local:vztmpl/jammy-server-cloudimg-amd64.tar.gz"
-    type             = "ubuntu"
+    type             = "debian"
   }
 
-  mount_point {
-    # volume mount, a new volume will be created by PVE
-    volume = "local-zfs"
-    size   = "10G"
-    path   = "/mnt/volume"
+   startup {    
+    order      = "100"
+    up_delay   = "20"
+    down_delay = "20"
   }
 
-  startup {
-    order      = "3"
-    up_delay   = "60"
-    down_delay = "60"
+  connection {
+    type     = "ssh"
+    user     = "root"
+    #password = random_password.odoo_template_password.result
+    private_key = tls_private_key.odoo_template_key.private_key_pem
+    host     = "10.0.0.180"
   }
+
+  provisioner "remote-exec" {
+    inline = [
+      "apt update",
+      "apt dist-upgrade -y",
+      #Install & Config Git
+      "apt install -y git",
+      "git config --global user.name Admin_Terraform", 
+      "git config --global user.email it@yyogestiono.com",
+      "cd /",
+      "git init",
+      "git clone https://github.com/eduardo-rodriguez-mena/odoo-template.git",
+      "mv odoo-template app",
+      #Install Docker
+      "apt install -y ca-certificates curl",
+      "curl -fsSL https://get.docker.com -o get-docker.sh",
+      "bash get-docker.sh",
+      "apt install -y docker-compose-plugin",
+      "echo 'cd /app/' >> /root/.bashrc",
+    ]
+  }
+
+
 }
 
-resource "proxmox_virtual_environment_download_file" "latest_ubuntu_22_jammy_lxc_img" {
+resource "proxmox_virtual_environment_download_file" "debian-12-standard_lxc_img" {
   content_type = "vztmpl"
   datastore_id = "local"
   node_name    = "vdc2-2"
-  url          = "http://download.proxmox.com/images/system/ubuntu-20.04-standard_20.04-1_amd64.tar.gz"
+  url          = "http://download.proxmox.com/images/system/debian-12-standard_12.7-1_amd64.tar.zst"
 }
 
-resource "random_password" "ubuntu_container_password" {
+resource "random_password" "odoo_template_password" {
   length           = 16
   override_special = "_%@"
   special          = true
 }
 
-resource "tls_private_key" "ubuntu_container_key" {
+resource "tls_private_key" "odoo_template_key" {
   algorithm = "RSA"
   rsa_bits  = 2048
 }
 
-output "ubuntu_container_password" {
-  value     = random_password.ubuntu_container_password.result
+output "odoo_template_password" {
+  value     = random_password.odoo_template_password.result
   sensitive = true
 }
 
-output "ubuntu_container_private_key" {
-  value     = tls_private_key.ubuntu_container_key.private_key_pem
+output "odoo_template_private_key" {
+  value     = tls_private_key.odoo_template_key.private_key_pem
   sensitive = true
 }
 
 output "ubuntu_container_public_key" {
-  value = tls_private_key.ubuntu_container_key.public_key_openssh
+  value = tls_private_key.odoo_template_key.public_key_openssh
 }
+
