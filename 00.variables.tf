@@ -37,6 +37,7 @@ variable "pve_container" {
     networkprefix = string
     gateway = string
     dnsservers = list(string)
+ 
   })
   description = "Define los parametros del contenedor a desplegar"
   default     = {
@@ -50,12 +51,11 @@ variable "pve_container" {
     nodename = "vdc2-2"
     template = "debian-12-standard_12.7-1_amd64.tar.zst"
     deploymenttype = "AiO"
-    environment = "test"
+    environment = "dev"        #Pude ser "test", dev o "prod"
     networkprefix = "10.0.0"
     gateway = "10.0.0.10"
     dnsservers = [ "10.0.0.10", "10.0.0.11" ]
-
-  }
+   }
 }
 
 variable "app" {
@@ -70,6 +70,7 @@ variable "app" {
     odoo_origin_ip = string
     odoo_origin_pass = string
     odoo_origin_hostname = string
+    deploymenttype = string
 })
   description = "Objeto para migación de Odoo"
   default = {
@@ -77,12 +78,13 @@ variable "app" {
     odoo_tag = "17.0"
     postgres_tag = "15.0"
     odoo_db_password = "jrC9**0+3iU5AA="
-    db_name = "almacaribe_dev"
+    db_name = "db_dev"
     odoo_admin_password = "1Qazxsw2/*-+"
-    odoo_origin_dir = "/app/odoo/almacaribe/docker"
+    odoo_origin_dir = "/app/odoo-almacaribe/docker"
     odoo_origin_ip = "89.117.74.155"
     odoo_origin_pass = "lAnXPVyPyjRCrcu294QZ2P"
-    odoo_origin_hostname = "alimento.com.cy"
+    odoo_origin_hostname = "yyogestiono.com"
+    deploymenttype = "new" #puede ser "migration" o "new"
   }
 }
 

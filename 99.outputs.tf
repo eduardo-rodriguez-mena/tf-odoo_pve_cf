@@ -19,7 +19,7 @@ output "odoo_template_private_key" {
   sensitive = true
 }
 
-output "ubuntu_container_public_key" {
+output "odoo_template_public_key" {
   value = tls_private_key.odoo_template_key.public_key_openssh
 }
 

@@ -1,3 +1,4 @@
+#Crear contenedor LXC Debian 12 para Odoo
 resource "proxmox_virtual_environment_container" "odoo_template" {
   description = <<EOT
 # Detalles Servicio
@@ -121,8 +122,10 @@ EOT
       "git clone https://github.com/eduardo-rodriguez-mena/odoo-template.git",
       "mv odoo-template app",
       #Seleccionando la carpeta adecuada para depsliegue
+      "echo Entrando a la carpeta de trabajo: /app/odoo-${lower(var.pve_container.deploymenttype)}/",
       "cd /app/odoo-${lower(var.pve_container.deploymenttype)}/",
       #Configurando el entorno
+      "echo Configurando el entorno de trabajo",
       "sed -i s/^HOST_NAME=.*/HOST_NAME=${var.pve_container.hostname}.${var.pve_container.domainname}/ .env",
       "sed -i s/^LE_EMAIL=.*/LE_EMAIL=${var.resposible_email}/ .env",
       "sed -i s/^ODOO_DATABASE=.*/ODOO_DATABASE=${var.app.db_name}/ .env",
@@ -130,19 +133,22 @@ EOT
       "sed -i s/^ODOO_TAG=.*/ODOO_TAG=${var.app.odoo_tag}/ .env",
       "sed -i s/^POSTGRES_TAG=.*/POSTGRES_TAG=${var.app.postgres_tag}/ .env",
       "sed -i s/^ODOO_DB_PASS=.*/ODOO_DB_PASS=${var.app.odoo_db_password}/ .env",
-      "sed -i s/^OLD_PROJETC_DIR=.*/OLD_PROJETC_DIR=${var.app.odoo_origin_pass}/ .env",
+      "sed -i s|^OLD_PROJETC_DIR=.*|OLD_PROJETC_DIR=${var.app.odoo_origin_pass}| .env",
       "sed -i s/^ODOO_ORIGIN_HOST=.*/ODOO_ORIGIN_HOST=${var.app.odoo_origin_ip}/ .env",
       "sed -i s/^RSYNC_PASSWORD=.*/RSYNC_PASSWORD=${var.app.odoo_origin_pass}/ .env",
       "sed -i s/^ODOO_ORIGIN_SITE=.*/ODOO_ORIGIN_SITE=${var.app.odoo_origin_hostname}/ .env",
       "sed -i s/^ADMIN_PASSWORD=.*/ADMIN_PASSWORD=${var.app.odoo_admin_password}/ .env",
       #Install Docker
+      "echo Instalando Docker",
       "apt install -y ca-certificates curl",
       "curl -fsSL https://get.docker.com -o get-docker.sh",
       "bash get-docker.sh",
       "apt install -y docker-compose-plugin",
       #Fijar carpeta de trabajo
       "echo cd /app/odoo-${lower(var.pve_container.deploymenttype)} >> /root/.bashrc",
-      
+      "echo Iniciando script de configuración: odoo_${var.app.deploymenttype}.sh",
+      "bash odoo_${var.app.deploymenttype}.sh",
+
       ]
   }
 }
