@@ -2,9 +2,9 @@ resource "proxmox_virtual_environment_container" "odoo_template" {
   description = <<EOT
 # Detalles Servicio
 
-Hostname: odoo-template
+Hostname: ${var.pve_hostname}
  
-**IP:** 10.0.0.180
+**IP:** 10.0.0.${var.pve_vmid}
 
 **Deployed Services: (Docker)** 
 
@@ -29,8 +29,8 @@ Hostname: odoo-template
 **Observations:**
 EOT
 
-  node_name = "vdc2-2"
-  vm_id     = 180
+  node_name = var.pve_nodename
+  vm_id     = var.pve_vmid
 
   cpu {
     cores = 2
@@ -51,18 +51,18 @@ EOT
   tags = ["terraform", "debian12", "docker", "odoo"]
 
   initialization {
-    hostname = "odoo-template"
+    hostname = var.pve_hostname
 
     ip_config {
       ipv4 {
-        address = "10.0.0.180/24"
-        gateway = "10.0.0.10"
+        address = "${var.pve_networkprefix}.${var.pve_vmid}/24"
+        gateway = var.pve_gateway
       }
     }
 
     dns {
-        domain = "yyogestiono.com"
-        servers = ["10.0.0.10", "10.0.0.11"] 
+        domain = var.pve_domainname
+        servers = var.pve_dnsservers
     }
 
     user_account {
@@ -102,7 +102,7 @@ EOT
     user     = "root"
     #password = random_password.odoo_template_password.result
     private_key = tls_private_key.odoo_template_key.private_key_pem
-    host     = "10.0.0.180"
+    host     = "${var.pve_networkprefix}.${var.pve_vmid}"
   }
 
   provisioner "remote-exec" {
@@ -130,6 +130,6 @@ EOT
 resource "proxmox_virtual_environment_download_file" "debian-12-standard_lxc_img" {
   content_type = "vztmpl"
   datastore_id = "local"
-  node_name    = "vdc2-2"
+  node_name    = var.pve_nodename
   url          = "http://download.proxmox.com/images/system/debian-12-standard_12.7-1_amd64.tar.zst"
 }
