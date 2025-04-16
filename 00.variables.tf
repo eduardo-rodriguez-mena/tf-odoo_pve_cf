@@ -27,6 +27,12 @@ variable "pve_vmid" {
   default     = 180
 }
 
+variable "pve_template" {
+  type        = string
+  description = "El ID de la plantilla"
+  default     = "debian-12-standard_12.0-1_amd64.tar.xz"
+}
+
 variable "pve_nodename" {
   type        = string
   description = "El nombre del nodo para desplegar el contenedor"

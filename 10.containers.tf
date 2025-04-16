@@ -131,5 +131,5 @@ resource "proxmox_virtual_environment_download_file" "debian-12-standard_lxc_img
   content_type = "vztmpl"
   datastore_id = "local"
   node_name    = var.pve_nodename
-  url          = "http://download.proxmox.com/images/system/debian-12-standard_12.7-1_amd64.tar.zst"
+  url          = "http://download.proxmox.com/images/system/${var.pve_template}"
 }
