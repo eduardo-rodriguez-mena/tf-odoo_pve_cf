@@ -23,82 +23,74 @@ variable "cloudflare_api_token" {
 
 variable "pve_container" {
   type        = object({
-    ram     = number
-    cores   = number
-    swap    = number
+    ram    = number
+    cores  = number
+    swap   = number
+    disksize = number
+    vmid   = number
+    hostname = string
+    domainname = string
+    nodename    = string
+    template = string
+    deploymenttype = string
+    environment = string
+    networkprefix = string
+    gateway = string
+    dnsservers = list(string)
   })
   description = "Define los parametros del contenedor a desplegar"
   default     = {
-    ram     = number
-    cores   = number
-    swap    = number
+    ram     = 2048
+    cores   = 2
+    swap    = 2048
+    disksize = 16
+    vmid    = 180
+    hostname = "test1"
+    domainname = "yyogestiono.com"
+    nodename = "vdc2-2"
+    template = "debian-12-standard_12.7-1_amd64.tar.zst"
+    deploymenttype = "AiO"
+    environment = "test"
+    networkprefix = "10.0.0"
+    gateway = "10.0.0.10"
+    dnsservers = [ "10.0.0.10", "10.0.0.11" ]
+
   }
 }
 
-variable "pve_vmid" {
-  type        = number
-  description = "El ID del contenedor"
-  default     = 180
+variable "app" {
+  type        = object({
+    db_host = string 
+    odoo_tag = string
+    postgres_tag = string
+    odoo_db_password = string
+    db_name = string
+    odoo_admin_password = string
+    odoo_origin_dir = string
+    odoo_origin_ip = string
+    odoo_origin_pass = string
+    odoo_origin_hostname = string
+})
+  description = "Objeto para migación de Odoo"
+  default = {
+    db_host = "db"
+    odoo_tag = "17.0"
+    postgres_tag = "15.0"
+    odoo_db_password = "jrC9**0+3iU5AA="
+    db_name = "almacaribe_dev"
+    odoo_admin_password = "1Qazxsw2/*-+"
+    odoo_origin_dir = "/app/odoo/almacaribe/docker"
+    odoo_origin_ip = "89.117.74.155"
+    odoo_origin_pass = "lAnXPVyPyjRCrcu294QZ2P"
+    odoo_origin_hostname = "alimento.com.cy"
+  }
 }
 
-variable "pve_template" {
-  type        = string
-  description = "El ID de la plantilla"
-  default     = "debian-12-standard_12.0-1_amd64.tar.xz"
-}
-
-variable "pve_deploymenttype" {
-  type        = string
-  description = "El tipo de despliegue del contenedor AiO ,Web o DB"
-  default     = "AiO"
-}
-
-Variable "pve_environment" {
-  type        = string
-  description = "El entorno de despliegue del contenedor test, dev, prod"
-  default     = "test"
-}
-
-variable "pve_nodename" {
-  type        = string
-  description = "El nombre del nodo para desplegar el contenedor"
-  default     = "vdc2-2"
-}
-
-variable "pve_networkprefix" {
-  type        = string
-  description = "El prefijo de la red Privada"
-  default     = "10.0.0"
-}
-
-variable "pve_gateway" {
-  type        = string
-  description = "El gateway de la red Privada para contenedor"
-  default     = "10.0.0.10"
-}
-
-variable "pve_dnsservers" {
-  type       = list(string)
-  description = "Los servidores DNS de la red Privada para contenedor"
-  default = [ "10.0.0.10", "10.0.0.11" ]
-}
 
 variable "pve_endpoint" {
   type        = string
   description = "El endpoint de tu entorno virtual"
   default     = "https://pve.yyogestiono.com:8006/api2/json/"
-}
-
-variable "pve_hostname" {
-  type        = string
-  description = "El nombre del Contendor"
-  default     = "test1"
-}
-
-variable "pve_domainname" {
-  type        = string
-  description = "El dominio del contenedor"
-  default     = "yyogestiono.com"
 }
 
 variable "pve_api_token" {
@@ -107,8 +99,25 @@ variable "pve_api_token" {
   default     = "terraform@pve!provider=ef8d178a-564a-4167-89e8-6c94103d7461"
 }
 
-#Valores determinados
+variable "resposible_email" {
+  type        = string
+  description = "Email del responsable del despliegue"
+  default     = "it@yyogestiono.com"
+}
+
+#Valores Calculados
 locals {
-  pve_gateway    = substr(var.pve_nodename, 0, 5) == "vdc2-" ? "10.0.0.10" : "10.0.0.11"
-  pve_dnsservers = substr(var.pve_nodename, 0, 5) == "vdc2-" ? [ "10.0.0.10", "10.0.0.11" ] : [ "10.0.0.11", "10.0.0.10" ]
+  pve_container = {
+    gateway     = substr(var.pve_container.nodename, 0, 5) == "vdc2-" ? "10.0.0.10" : "10.0.0.11"
+    dnsservers  = substr(var.pve_container.nodename, 0, 5) == "vdc2-" ? [ "10.0.0.10", "10.0.0.11" ] : [ "10.0.0.11", "10.0.0.10" ]
+    cores      = var.pve_container.environment == "prod" ? 4 : 2
+    ram        = var.pve_container.environment == "prod" ? 4096 : 2048
+    swap       = var.pve_container.environment == "prod" ? 4096 : 2048
+    disk_size  = var.pve_container.environment == "prod" ? 32 : 16
+}
+
+  app = {
+    db_name = "${var.pve_container.hostname}_${var.pve_container.environment}"
   }
+}
+
