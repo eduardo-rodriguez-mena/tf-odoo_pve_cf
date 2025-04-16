@@ -21,6 +21,13 @@ variable "cloudflare_api_token" {
 
 #Proxmox Variables
 
+variable "pve_vmid" {
+  type        = number
+  description = "El ID de la VM"
+  default     = 180
+}
+
+
 variable "pve_endpoint" {
   type        = string
   description = "El endpoint de tu entorno virtual"
