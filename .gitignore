@@ -1,0 +1,10 @@
+#Evitar que los archivos de Provider y estado de Terraform vayan al repo
+**terraform.tfstate
+**/terraform.tfstate.backup
+**/crash.log
+**/override.tf
+**/override.tf.json
+**/*.tfvars
+**/*.tfvars.json
+**/.terraform.lock.hcl
+**/.terraform/
