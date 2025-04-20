@@ -7,3 +7,14 @@
 #     proxied = true
 #     ttl     = 1           # Set TTL to 1 for automatic TTL
 # }
+
+# 
+# # data "cloudflare_zero_trust_tunnel_cloudflared_routes" "tunnel_routes" {
+#     account_id = var.cloudflare_account_id
+#     #tunnel_id  = var.cloudflare_tunnel_id
+# }
+
+data "cloudflare_zero_trust_tunnel_cloudflared" "tunnel_routes" {
+    account_id = var.cloudflare_account_id
+    name       = "EU_vDC1_Tun1"
+}

@@ -1,3 +1,7 @@
+#Cloudfare Outputs
+output "example_tunnel_routes" {
+    value = data.cloudflare_zero_trust_tunnel_cloudflared.tunnel_routes.id
+}
 #Proxmox Outputs
 
 #data "proxmox_virtual_environment_node" "nodos" {

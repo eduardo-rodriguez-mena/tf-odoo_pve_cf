@@ -6,6 +6,18 @@ variable "cloudflare_account_id" {
   default     = "de1f5fea24729ce398e522a0623a2872"
 }
 
+variable "cloudflare_tunnel_id" {
+  type        = string
+  description = "El ID de tu túnel de Cloudflare"
+  default     = "f1fbce14-6292-4eab-98fa-356f8abb511e"
+}
+
+variable "cloudflare_tunnel_name" {
+  type        = string
+  description = "El nombre de tu túnel de Cloudflare"
+  default     = "tunnel-terraform"
+}
+
 variable "cloudflare_zone_id" {
   type        = string
   description = "El ID de tu zona de Cloudflare"
@@ -48,7 +60,7 @@ variable "pve_container" {
     vmid    = 180
     hostname = "test1"
     domainname = "yyogestiono.com"
-    nodename = "vdc2-2"
+    nodename = "vdc1-2"
     template = "debian-12-standard_12.7-1_amd64.tar.zst"
     deploymenttype = "AiO"
     environment = "dev"        #Pude ser "test", dev o "prod"

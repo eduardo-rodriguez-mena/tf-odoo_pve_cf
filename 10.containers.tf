@@ -46,6 +46,7 @@ EOT
   }
 
   unprivileged = true
+  migrate = true
 
   features {
     nesting = true
