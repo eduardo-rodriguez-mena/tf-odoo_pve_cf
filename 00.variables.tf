@@ -35,10 +35,6 @@ variable "cloudflare_api_token" {
 
 variable "pve_container" {
   type        = object({
-    ram    = number
-    cores  = number
-    swap   = number
-    disksize = number
     vmid   = number
     hostname = string
     domainname = string
@@ -47,16 +43,11 @@ variable "pve_container" {
     deploymenttype = string
     environment = string
     networkprefix = string
-    gateway = string
-    dnsservers = list(string)
- 
+    bootstart = bool
+  
   })
   description = "Define los parametros del contenedor a desplegar"
   default     = {
-    ram     = 2048
-    cores   = 2
-    swap    = 2048
-    disksize = 16
     vmid    = 180
     hostname = "test1"
     domainname = "yyogestiono.com"
@@ -65,8 +56,7 @@ variable "pve_container" {
     deploymenttype = "AiO"
     environment = "dev"        #Pude ser "test", dev o "prod"
     networkprefix = "10.0.0"
-    gateway = "10.0.0.10"
-    dnsservers = [ "10.0.0.10", "10.0.0.11" ]
+    bootstart = true
    }
 }
 
@@ -76,7 +66,6 @@ variable "app" {
     odoo_tag = string
     postgres_tag = string
     odoo_db_password = string
-    db_name = string
     odoo_admin_password = string
     odoo_origin_dir = string
     odoo_origin_ip = string
@@ -90,7 +79,6 @@ variable "app" {
     odoo_tag = "17.0"
     postgres_tag = "15.0"
     odoo_db_password = "jrC9**0+3iU5AA="
-    db_name = "db_dev"
     odoo_admin_password = "1Qazxsw2/*-+"
     odoo_origin_dir = "/app/odoo-almacaribe/docker"
     odoo_origin_ip = "89.117.74.155"
@@ -120,7 +108,7 @@ variable "resposible_email" {
 }
 
 #Valores Calculados
-locals {
+locals  {
   pve_container = {
     gateway     = substr(var.pve_container.nodename, 0, 5) == "vdc2-" ? "10.0.0.10" : "10.0.0.11"
     dnsservers  = substr(var.pve_container.nodename, 0, 5) == "vdc2-" ? [ "10.0.0.10", "10.0.0.11" ] : [ "10.0.0.11", "10.0.0.10" ]
@@ -128,10 +116,17 @@ locals {
     ram        = var.pve_container.environment == "prod" ? 4096 : 2048
     swap       = var.pve_container.environment == "prod" ? 4096 : 2048
     disk_size  = var.pve_container.environment == "prod" ? 32 : 16
+    replication = var.pve_container.environment == "prod" ? true : false
+    replication_node = var.pve_container.nodename == "vdc1-1" ? "vdc2-1" : (var.pve_container.nodename == "vdc1-2" ? "vdc2-2" : (var.pve_container.nodename == "vdc2-1" ? "vdc1-1" : "vdc2-1"))
+    replication_frequency = var.pve_container.environment == "prod" ? 5 : 30
 }
 
   app = {
     db_name = "${var.pve_container.hostname}_${var.pve_container.environment}"
   }
+}
+
+locals {
+  
 }
 

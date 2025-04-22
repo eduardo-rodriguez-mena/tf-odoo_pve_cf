@@ -36,18 +36,17 @@ EOT
   vm_id     = var.pve_container.vmid
 
   cpu {
-    cores = var.pve_container.cores
+    cores = local.pve_container.cores
     units = 100
   } 
 
   memory {
-    dedicated = var.pve_container.ram
-    swap = var.pve_container.swap
+    dedicated = local.pve_container.ram
+    swap = local.pve_container.swap
   }
 
   unprivileged = true
-  migrate = true
-
+  
   features {
     nesting = true
   }
@@ -60,13 +59,13 @@ EOT
     ip_config {
       ipv4 {
         address = "${var.pve_container.networkprefix}.${var.pve_container.vmid}/24"
-        gateway = var.pve_container.gateway
+        gateway = local.pve_container.gateway
       }
     }
 
     dns {
         domain = var.pve_container.domainname
-        servers = var.pve_container.dnsservers
+        servers = local.pve_container.dnsservers
     }
 
     user_account {
@@ -85,7 +84,7 @@ EOT
 
   disk {
     datastore_id = "local-zfs"
-    size         = var.pve_container.disksize
+    size         = local.pve_container.disk_size
   }
 
   operating_system {
@@ -129,7 +128,7 @@ EOT
       "echo Configurando el entorno de trabajo",
       "sed -i s/^HOST_NAME=.*/HOST_NAME=${var.pve_container.hostname}:.${var.pve_container.domainname}/ .env",
       "sed -i s/^LE_EMAIL=.*/LE_EMAIL=${var.resposible_email}/ .env",
-      "sed -i s/^ODOO_DATABASE=.*/ODOO_DATABASE=${var.app.db_name}/ .env",
+      "sed -i s/^ODOO_DATABASE=.*/ODOO_DATABASE=${local.app.db_name}/ .env",
       "sed -i s/^DB_HOST=.*/DB_HOST=${var.app.db_host}/ .env",
       "sed -i s/^ODOO_TAG=.*/ODOO_TAG=${var.app.odoo_tag}/ .env",
       "sed -i s/^POSTGRES_TAG=.*/POSTGRES_TAG=${var.app.postgres_tag}/ .env",
@@ -154,9 +153,26 @@ EOT
   }
 }
 
+resource "null_resource" "replication_job" {
+  count = local.pve_container.replication ? 1 : 0 # This resource runs only if replication is true
+   depends_on = [ 
+    proxmox_virtual_environment_container.odoo_template
+   ]
+   
+  provisioner "local-exec" {
+    command = <<EOT
+      ssh -v -J "root@${substr(var.pve_container.nodename, 0, 5)}1.${var.pve_container.domainname}" "root@${var.pve_container.nodename}.${var.pve_container.domainname}" << EOF
+            pvesr create-local-job ${var.pve_container.vmid}-0 ${local.pve_container.replication_node} --schedule  "*/${local.pve_container.replication_frequency}" --rate 10
+        EOF
+    EOT
+  }
+}
+
+
 resource "proxmox_virtual_environment_download_file" "debian-12-standard_lxc_img" {
   content_type = "vztmpl"
   datastore_id = "local"
   node_name    = var.pve_container.nodename
   url          = "http://download.proxmox.com/images/system/${var.pve_container.template}"
+  overwrite    = false
 }
