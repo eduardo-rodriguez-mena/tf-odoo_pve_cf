@@ -53,7 +53,7 @@ variable "pve_container" {
     domainname = "yyogestiono.com"
     nodename = "vdc1-2"
     template = "debian-12-standard_12.7-1_amd64.tar.zst"
-    deploymenttype = "AiO"
+    deploymenttype = "AiO"disksi
     environment = "dev"        #Pude ser "test", dev o "prod"
     networkprefix = "10.0.0"
     bootstart = true
